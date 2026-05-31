@@ -2,7 +2,8 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from helper_function import accuracy_fn
-from torch import device
+from typing import Union
+from tqdm.auto import tqdm
 
 
 def train_step(
@@ -11,7 +12,7 @@ def train_step(
     loss_fn: torch.nn.Module,
     optimizer: torch.optim.Optimizer,
     accuracy_fn,
-    device: torch.device = "cuda" if torch.cuda.is_available() else "cpu",
+    device: Union[str, torch.device] = "cuda" if torch.cuda.is_available() else "cpu",
 ):
     """peroforms a training with model training to learn on data_loader"""
 
@@ -58,9 +59,9 @@ def test_step(
     test_dataloader: torch.utils.data.DataLoader,
     loss_fn: nn.Module,
     accuracy_fn,
-    device: torch.device = "cuda" if torch.cuda.is_available() else "cpu",
+    device: Union[str, torch.device] = "cuda" if torch.cuda.is_available() else "cpu",
 ):
-    """Performs a testing loop on model going over data_laoder"""
+    """Performs a testing loop on model going over data_loader"""
     test_loss, test_acc = 0, 0
 
     model.eval()
@@ -70,9 +71,42 @@ def test_step(
             X, y = X.to(device), y.to(device)
             # 1.forward pass
             test_pred = model(X)
+            # 2. Calculate the loss and accuracy (per batch)
+            test_loss += loss_fn(test_pred, y)
+            test_acc += accuracy_fn(y_true=y, y_pred=test_pred.argmax(dim=1))
 
-        test_loss += loss_fn(test_pred, y)
-        test_acc += accuracy_fn(y_true=y, y_pred=test_pred.argmax(dim=1))
         # Adjust metrics and print out
         test_loss /= len(test_dataloader)
         test_acc /= len(test_dataloader)
+        print(f"Test loss: {test_loss:.5f} | Test acc: {test_acc:.2f}%\n")
+
+
+def eval_model(
+    model: torch.nn.Module,
+    data_loader: torch.utils.data.DataLoader,
+    loss_fn: torch.nn.Module,
+    accuracy_fn,
+    device: Union[str, torch.device] = "cuda" if torch.cuda.is_available() else "cpu",
+):
+    """Returns a dictionary contatining the results of model predicting on data_loader"""
+    loss, acc = 0, 0
+    model.eval()
+    with torch.inference_mode():
+        for X, y in tqdm(data_loader):
+            # Device agnostic
+            X, y = X.to(device), y.to(device)
+
+            # Make predictions
+            y_pred = model(X)
+            # Accumulate the loss and acc values per batch
+            loss += loss_fn(y_pred, y)
+            acc += accuracy_fn(y_true=y, y_pred=y_pred.argmax(dim=1))
+            # argmax will function as the softmax activation function as it will return the highest value from the set of output logits
+        # Scale the loss and acc to find the average loss / acc per batch
+        loss /= len(data_loader)
+        acc /= len(data_loader)
+        return {
+            "model_name": model.__class__.__name__,  # Only works when model is created with a class
+            "model_loss": loss.item(),
+            "model_acc": acc,
+        }
