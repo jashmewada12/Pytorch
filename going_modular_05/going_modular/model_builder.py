@@ -54,15 +54,5 @@ class TinyVGG(nn.Module):
       x = self.classifier(x)
       return x
       # return self.classifier(self.conv_block_2(self.conv_block_1(x))) # <- leverage the benefits of operator fusion
-Now instead of coding the TinyVGG model from scratch every time, we can import it using:
 
-import torch
-# Import model_builder.py
-from going_modular import model_builder
-device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Instantiate an instance of the model from the "model_builder.py" script
-torch.manual_seed(42)
-model = model_builder.TinyVGG(input_shape=3,
-                              hidden_units=10, 
-                              output_shape=len(class_names)).to(device)
