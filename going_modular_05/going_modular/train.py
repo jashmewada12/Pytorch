@@ -1,29 +1,36 @@
 """
 Trains a PyTorch image classification model using device-agnostic code.
 """
-
 import os
+import argparse
 import torch
 import data_setup, engine, model_builder, utils
-import argparse
+
 from torchvision import transforms
 
-parser = argparse.ArgumentParser(description="Train a TinyVGG model with custom hyperparameters")
+# 1. Initialize the parser
+parser = argparse.ArgumentParser(description="Train a TinyVGG model with custom hyperparameters.")
 
-parser.add_argument("--num_epochs",default=10,type=int,help="Number of epochs")
-parser.add_argument("--batch_size ",default=32,type=int,help="Number of samples per batch")
-parser.add_argument("--num_epochs",default=10,type=int,help="Number of hidden units in the model")
-parser.add_argument("--num_epochs",default=10,type=int,help="Number of epochs")
+# 2. Add the arguments we want to be able to change
+parser.add_argument("--num_epochs", default=5, type=int, help="Number of epochs to train for")
+parser.add_argument("--batch_size", default=32, type=int, help="Number of samples per batch")
+parser.add_argument("--hidden_units", default=10, type=int, help="Number of hidden units in the model")
+parser.add_argument("--learning_rate", default=0.001, type=float, help="Learning rate for the optimizer")
+parser.add_argument("--train_transform",default=data_transform,type=transforms.Compose,help="Type of transforms to apply on training images")
 
+# 3. Parse the arguments
+args = parser.parse_args()
 
+# Setup hyperparameters using the parsed arguments
+NUM_EPOCHS = args.num_epochs
+BATCH_SIZE = args.batch_size
+HIDDEN_UNITS = args.hidden_units
+LEARNING_RATE = args.learning_rate
+TRAIN_TRANSFORM = args.train_transform
 
-# Setup hyperparameters
-NUM_EPOCHS = 5
-BATCH_SIZE = 32
-HIDDEN_UNITS = 10
-LEARNING_RATE = 0.001
+print(f"[INFO]\n epochs : {NUM_EPOCHS}\nbatch size : {BATCH_SIZE}\nhidden units : {HIDDEN_UNITS}\nlearning rate : {LEARNING_RATE}\nTransforms : {TRAIN_TRANSFORM}")
 
-# Setup directories
+# Setup directories 
 train_dir = "../data/pizza_steak_sushi/train"
 test_dir = "../data/pizza_steak_sushi/test"
 
@@ -40,7 +47,7 @@ data_transform = transforms.Compose([
 train_dataloader, test_dataloader, class_names = data_setup.create_dataloaders(
     train_dir=train_dir,
     test_dir=test_dir,
-    transform=data_transform,
+    transform=TRAIN_TRANSFORM,
     batch_size=BATCH_SIZE
 )
 
