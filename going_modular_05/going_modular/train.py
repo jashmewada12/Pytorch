@@ -35,7 +35,8 @@ parser.add_argument("--batch_size", default=32, type=int, help="Number of sample
 parser.add_argument("--hidden_units", default=10, type=int, help="Number of hidden units in the model")
 parser.add_argument("--learning_rate", default=0.001, type=float, help="Learning rate for the optimizer")
 parser.add_argument("--train_transform",default=TRAIN_TRANSFORM,type=transforms.Compose,help="Type of transforms to apply on training images")
-
+parser.add_argument("--pred_img",default = r"C:\Free code camp\fcc ml\going_modular_05\data\images.jpeg",
+type = str,help = "path of the image you want to make predictions on" )
 # 3. Parse the arguments
 args = parser.parse_args()
 
@@ -62,7 +63,8 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 train_dataloader, test_dataloader, class_names,class_dict = data_setup.create_dataloaders(
     train_dir=train_dir,
     test_dir=test_dir,
-    transform=TRAIN_TRANSFORM,
+    train_transform=TRAIN_TRANSFORM,
+    test_transform = TEST_TRANSFORM,
     batch_size=BATCH_SIZE
 )
 
