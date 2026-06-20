@@ -40,7 +40,7 @@ def main():
 
 
     print(f"[INFO] Instantiating TinyVGG model with {args.hidden_units} hidden units...")
-    model = model_builder.TinyVGG(
+    model = model_builder.TinyVGG_v1(
         input_shape=3,
         hidden_units=args.hidden_units,
         output_shape=len(class_names)

@@ -6,7 +6,16 @@ import os
 import argparse
 import torch
 import data_setup, engine, model_builder, utils
-from pred_plot import pred_plot_img as pred_plot
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import sys
+import importlib
+import pred_plot as pred_plot_module
+if "pred_plot" in sys.modules:
+    importlib.reload(sys.modules["pred_plot"])
+from pred_plot import pred_plot
+
 
 from torchvision import transforms
 
@@ -69,7 +78,7 @@ train_dataloader, test_dataloader, class_names,class_dict = data_setup.create_da
 )
 
 # Create model with help from model_builder.py
-model = model_builder.TinyVGG(
+model = model_builder.TinyVGG_v1(
     input_shape=3,
     hidden_units=HIDDEN_UNITS,
     output_shape=len(class_names)
@@ -81,7 +90,7 @@ optimizer = torch.optim.Adam(model.parameters(),
                              lr=LEARNING_RATE)
 
 # Start training with help from engine.py
-engine.train(model=model,
+results = engine.train(model=model,
              train_dataloader=train_dataloader,
              test_dataloader=test_dataloader,
              loss_fn=loss_fn,
@@ -90,9 +99,34 @@ engine.train(model=model,
              device=device)
 
 #making predictions on a random image
-pred_plot(model = model,image_path = IMG_PATH,class_names = class_names,transform = PLOT_TRANSFORM,device = device )
+pred_plot(model = model,test_data = test_dataloader.dataset,class_names = class_names,device =device)
 
 # Save the model with help from utils.py
 utils.save_model(model=model,
                  target_dir="models",
                  model_name="05_going_modular_script_mode_tinyvgg_model_v1.pth")
+
+#Plotting 
+
+
+#Setup a plot
+Tinyvgg_v1_results = pd.DataFrame(results)
+plt.figure(figsize=(15,10))
+#Get number of epochs
+epochs = range(len(Tinyvgg_v1_results))
+
+
+#Plotting the train loss
+plt.subplot(2,2,1)
+plt.plot(epochs,Tinyvgg_v1_results["train_loss"],label = "Train loss")
+plt.plot(epochs,Tinyvgg_v1_results["test_loss"],label = "Test loss")
+plt.title("Train & Test loss")
+plt.xlabel("Epochs")
+plt.legend()
+
+plt.subplot(2,2,2)
+plt.plot(epochs,Tinyvgg_v1_results["test_acc"],label = "Test accuracy")
+plt.plot(epochs,Tinyvgg_v1_results["train_acc"],label = "Train accuracy")
+plt.title("Test loss")
+plt.xlabel("Epochs")
+plt.legend()
