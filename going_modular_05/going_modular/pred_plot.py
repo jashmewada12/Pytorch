@@ -1,4 +1,10 @@
-def pred_plot_img(model:torch.nn.Module,image_path:str,class_names:list[str] = None,transform = None,device = device):
+import torch
+import torchvision
+import matplotlib.pyplot as plt
+
+
+
+def pred_plot_img(model:torch.nn.Module,image_path:str,class_names:list[str] = None,transform = None,device: str = "cuda" if torch.cuda.is_available() else "cpu"):
     """Makes a prediction on a target image with a trained model and plots the image and the predcition"""
     #Loading an image
     target_image = torchvision.io.read_image(str(image_path)).type(torch.float32)
@@ -33,12 +39,9 @@ def pred_plot_img(model:torch.nn.Module,image_path:str,class_names:list[str] = N
         plt.imshow(target_image.squeeze().permute(1,2,0))
 
         if class_names:
-            title = f"Pred : {class_names[target_img_pred_labels.cpu()]} | Prob : {target_img_pred_probs.max().cpu():.3f}"
+            title = f"Pred : {class_names[target_img_pred_labels.item()]} | Prob : {target_img_pred_probs.max().item():.3f}"
         else:
             title = f"Pred : {target_img_pred_labels} | Prob : {target_img_pred_probs.max().cpu():.3f}"
 
         plt.title(title)
         plt.axis(False)
-
-
-

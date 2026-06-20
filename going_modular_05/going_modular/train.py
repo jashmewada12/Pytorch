@@ -1,3 +1,4 @@
+
 """
 Trains a PyTorch image classification model using device-agnostic code.
 """
@@ -5,8 +6,25 @@ import os
 import argparse
 import torch
 import data_setup, engine, model_builder, utils
+from pred_plot import pred_plot_img as pred_plot
 
 from torchvision import transforms
+
+TEST_TRANSFORM = transforms.Compose([
+  transforms.Resize((64, 64)),
+  transforms.ToTensor()
+])
+
+TRAIN_TRANSFORM = transforms.Compose([
+  transforms.Resize((64, 64)),
+  transforms.TrivialAugmentWide(num_magnitude_bins=20),
+  transforms.ToTensor()
+])
+
+PLOT_TRANSFORM = transforms.Compose([
+  transforms.Resize((64,64),antialias= True)
+  
+])
 
 # 1. Initialize the parser
 parser = argparse.ArgumentParser(description="Train a TinyVGG model with custom hyperparameters.")
@@ -16,7 +34,7 @@ parser.add_argument("--num_epochs", default=5, type=int, help="Number of epochs 
 parser.add_argument("--batch_size", default=32, type=int, help="Number of samples per batch")
 parser.add_argument("--hidden_units", default=10, type=int, help="Number of hidden units in the model")
 parser.add_argument("--learning_rate", default=0.001, type=float, help="Learning rate for the optimizer")
-parser.add_argument("--train_transform",default=data_transform,type=transforms.Compose,help="Type of transforms to apply on training images")
+parser.add_argument("--train_transform",default=TRAIN_TRANSFORM,type=transforms.Compose,help="Type of transforms to apply on training images")
 
 # 3. Parse the arguments
 args = parser.parse_args()
@@ -27,8 +45,9 @@ BATCH_SIZE = args.batch_size
 HIDDEN_UNITS = args.hidden_units
 LEARNING_RATE = args.learning_rate
 TRAIN_TRANSFORM = args.train_transform
+IMG_PATH =  r"C:\Free code camp\fcc ml\going_modular_05\data\images.jpeg"
 
-print(f"[INFO]\n epochs : {NUM_EPOCHS}\nbatch size : {BATCH_SIZE}\nhidden units : {HIDDEN_UNITS}\nlearning rate : {LEARNING_RATE}\nTransforms : {TRAIN_TRANSFORM}")
+print(f"[INFO]\nepochs : {NUM_EPOCHS}\nbatch size : {BATCH_SIZE}\nhidden units : {HIDDEN_UNITS}\nlearning rate : {LEARNING_RATE}\nTransforms : {TRAIN_TRANSFORM}")
 
 # Setup directories 
 train_dir = "../data/pizza_steak_sushi/train"
@@ -37,14 +56,10 @@ test_dir = "../data/pizza_steak_sushi/test"
 # Setup target device
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Create transforms
-data_transform = transforms.Compose([
-  transforms.Resize((64, 64)),
-  transforms.ToTensor()
-])
+
 
 # Create DataLoaders with help from data_setup.py
-train_dataloader, test_dataloader, class_names = data_setup.create_dataloaders(
+train_dataloader, test_dataloader, class_names,class_dict = data_setup.create_dataloaders(
     train_dir=train_dir,
     test_dir=test_dir,
     transform=TRAIN_TRANSFORM,
@@ -71,6 +86,9 @@ engine.train(model=model,
              optimizer=optimizer,
              epochs=NUM_EPOCHS,
              device=device)
+
+#making predictions on a random image
+pred_plot(model = model,image_path = IMG_PATH,class_names = class_names,transform = PLOT_TRANSFORM,device = device )
 
 # Save the model with help from utils.py
 utils.save_model(model=model,
